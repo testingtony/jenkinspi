@@ -1,0 +1,3 @@
+blinkt
+paho-mqtt
+PyYaml

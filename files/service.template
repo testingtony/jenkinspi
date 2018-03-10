@@ -1,0 +1,13 @@
+[Unit]
+Description={{item.program}}
+After=mosquitto
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/monitor/apps/{{item.program}}/program
+ExecStart=/opt/monitor/apps/{{item.program}}/venv/bin/python3 {{item.main}}
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
