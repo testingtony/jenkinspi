@@ -1,0 +1,6 @@
+*.retry
+inventory/
+*~
+*#
+venv/
+.idea/
