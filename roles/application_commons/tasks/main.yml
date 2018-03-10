@@ -1,0 +1,11 @@
+---
+- name: Get virtual env binaries
+  package:
+    name: "{{package}}"
+  with_items:
+    - python3
+    - python3-venv
+    - python3-pip
+  loop_control:
+    loop_var: package
+...

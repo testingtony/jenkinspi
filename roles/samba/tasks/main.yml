@@ -1,0 +1,56 @@
+---
+- name: Install Samba binaries
+  package:
+    name: "{{item}}"
+  with_items:
+    - samba
+    - samba-common-bin
+
+- name: Create file system
+  file:
+    path: "/opt/monitor/{{item}}"
+    state: directory
+    mode: 01777
+  with_items:
+    - apps
+  notify: Restart Samba
+
+- name: Set Samba name
+  ini_file:
+    path: /etc/samba/smb.conf
+    section: "{{item.section}}"
+    option: "{{item.option}}"
+    value: "{{item.value}}"
+  with_items:
+    - {section: global, option: workgroup, value: ILIAD}
+    - {section: global, option: netbios name, value: monitor}
+  notify: Restart Samba
+
+- name: delete homes
+  ini_file:
+    path: /etc/samba/smb.conf
+    section: homes
+    state: absent
+  notify: Restart Samba
+
+- name: Configure Samba
+  blockinfile:
+    path: /etc/samba/smb.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK for {{item}}"
+    block: |
+      [{{item}}]
+      Comment = {{item}} files
+      Path = /opt/monitor/{{item}}
+      Browseable = yes
+      Writeable = yes
+      only guest = yes
+      create mask = 0777
+      directory mask = 0777
+      Public = yes
+      Guest ok = yes
+      hide files = /program/
+      veto files = /venv/
+  with_items:
+    - apps
+  notify: Restart Samba
+

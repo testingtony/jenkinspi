@@ -1,0 +1,11 @@
+---
+- hosts: monitor
+  become: true
+
+  roles:
+    - blinkt
+    - samba
+    - application_commons
+    - mqtt
+  
+          

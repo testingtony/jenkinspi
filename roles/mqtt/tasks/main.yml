@@ -1,0 +1,7 @@
+---
+- name: Install Mosquitto MQTT
+  package:
+    name: "{{item}}"
+  with_items:
+    - mosquitto
+    - mosquitto-clients
