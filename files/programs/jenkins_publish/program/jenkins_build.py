@@ -1,5 +1,6 @@
 import requests
 import json
+import time
 
 
 class JenkinsBuild:
@@ -11,9 +12,9 @@ class JenkinsBuild:
 
     @property
     def status(self):
+        url = self.url + "/lastBuild/api/json?tree=id,building,result,changeSets[items[commitId]]{0},timestamp"
         try:
-            request = requests.get(self.url + "/lastBuild/api/json?tree=id,building,result,changeSets[items[commitId]]{0}",
-                                   auth=self.auth)
+            request = requests.get(url, auth=self.auth)
 
             if request.status_code == 200:
                 data = json.loads(request.text)
@@ -31,11 +32,16 @@ class JenkinsBuild:
 
                 try:
                     build_id = data['changeSets'][0]['items'][0]['commitId']
-                except KeyError as err:
+                except (KeyError, IndexError) as err:
                     print("Could not get build id {}".format(err))
                     build_id = "????"
 
-                return {'building': building, 'result': result, 'buildid': build_id}
+                timestamp = time.strftime("%Y/%m/%d %H:%m:%d", time.localtime(data.get('timestamp', 0)/1000))
+
+                return {'building': building, 'result': result, 'buildid': build_id, 'time': timestamp}
+            else:
+                print("Status code {} message {}".format(request.status_code, request.text))
         except BaseException as err:
             print("Got an error " + str(err))
+            print("URL is {}".format(url))
             return None

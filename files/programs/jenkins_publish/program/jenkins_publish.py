@@ -5,8 +5,8 @@ import time
 from jenkins_build import JenkinsBuild
 
 
-def on_connect(client, user_data, flags, rc):
-    print("Connected with result code "+str(rc) + " " + str(flags) + " " + str(user_data) + " " + repr(client))
+def on_connect(client, userdata, flags, rc):
+    print("Connected with result code "+str(rc) + " " + str(flags) + " " + str(userdata) + " " + repr(client))
 
 
 def main(yaml_file="../config/jenkins_publish.yml"):

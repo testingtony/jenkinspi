@@ -14,7 +14,7 @@ class Pixel:
         self.status = {'building': False, 'result': None}
 
     def show(self):
-        if self.status.get('building', False):
+        if self.status.get('building', False) or self._brightness:
             self._brightness = (self._brightness + 1) % 19
         else:
             self._brightness = 0
@@ -48,6 +48,7 @@ def on_message(client, userdata, msg):
 
 def stop_now():
     global loop
+    loop = False
 
 
 def main(yaml_file="../config/blinkt_display.yml"):
