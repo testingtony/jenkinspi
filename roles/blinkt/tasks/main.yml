@@ -1,6 +1,0 @@
----
-- name: Install BLINKT libraries
-  package:
-    name: "{{item}}"
-  with_items:
-    - raspi-gpio
