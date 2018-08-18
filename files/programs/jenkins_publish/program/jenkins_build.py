@@ -12,7 +12,7 @@ class JenkinsBuild:
 
     @property
     def status(self):
-        url = self.url + "/lastBuild/api/json?tree=id,building,result,changeSets[items[commitId]]{0},timestamp"
+        url = self.url + "/lastBuild/api/json?tree=id,building,result,changeSets[items[commitId]],timestamp"
         try:
             request = requests.get(url, auth=self.auth)
 
@@ -30,13 +30,13 @@ class JenkinsBuild:
 
                 self.last_result = result
 
-                try:
-                    build_id = data['changeSets'][0]['items'][0]['commitId']
-                except (KeyError, IndexError) as err:
-                    print("Could not get build id {}".format(err))
-                    build_id = "????"
-
-                timestamp = time.strftime("%Y/%m/%d %H:%m:%d", time.localtime(data.get('timestamp', 0)/1000))
+                then = data.get('timestamp', 0)/1000
+                now = time.time()
+                timestamp = time.strftime("%Y/%m/%d %H:%M:%d", time.localtime(then))
+                if now - then > 24 * 60 * 60:
+                    build_id = ".".join(time.strftime("%H%M", time.localtime(then))) + "."
+                else:
+                    build_id = time.strftime("%H.%M", time.localtime(then))
 
                 return {'building': building, 'result': result, 'buildid': build_id, 'time': timestamp}
             else:
