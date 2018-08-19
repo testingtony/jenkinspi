@@ -1,0 +1,3 @@
+PyYaml
+paho-mqtt
+requests
