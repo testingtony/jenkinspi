@@ -7,7 +7,9 @@ mq: localhost
 pause: 10 # seconds between polling jenkins
 jobs:
   - job: path/to/jenkins/job1
-    topic: jenkins/job/topic1
+    topic: jenkins/deploy/topic1
+    build_topic: jenkins/build/topic1
   - job: path/to/jenkins/job2
-    topic: jenkins/job/topic2
+    topic: jenkins/deploy/topic2
+    build_topic: jenkins/build/topic2
 ...
