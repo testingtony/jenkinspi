@@ -11,6 +11,8 @@
         main: blinkt_display.py
       - program: control
         main: control.py
+      - program: jenkins_deploy
+        main: jenkins_deploy.py
     programs: "{{details | json_query('[*].program')}}"
 
   tasks:
