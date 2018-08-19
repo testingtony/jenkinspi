@@ -29,6 +29,11 @@ Applications
 ### jenkins_publish
 Polls Jenkins and publishes `{building, result, build_id}` to mqtt topics. 
 
+### jenkins_deploy
+Subscribes to updates from `jenkins_publish`.
+Polls Jenkins (deploy jobs) and publishes `{building, result, build_id, build_status}` to mqtt topics with
+details of the build job being deployed. 
+
 ### blink_display
 Displays the `result` and `building` status for topics on blink lights
 
