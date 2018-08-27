@@ -1,15 +1,14 @@
 ---
-url: 'https://jenkins.hostname/job/'
-auth:
-  user: user.name
-  token: user.token
 mq: localhost
 pause: 10 # seconds between polling jenkins
 jobs:
-  - job: path/to/jenkins/job1
-    topic: jenkins/deploy/topic1
-    build_topic: jenkins/build/topic1
-  - job: path/to/jenkins/job2
-    topic: jenkins/deploy/topic2
-    build_topic: jenkins/build/topic2
+  - build: jenkins/build/job1
+    deploy: jenkins/deploy/job1
+    publish: jenkins/info/job1
+  - build: jenkins/build/job2
+    deploy: jenkins/deploy/job2
+    publish: jenkins/info/job2
+  - build: jenkins/build/job3
+    deploy: jenkins/deploy/job3
+    publish: jenkins/info/job3
 ...
