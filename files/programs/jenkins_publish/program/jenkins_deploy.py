@@ -3,7 +3,7 @@ import json
 import time
 
 
-class JenkinsBuild:
+class JenkinsDeploy:
     def __init__(self, url, auth):
         self.url = url
         self.auth = (auth['user'], auth['token'])
@@ -12,7 +12,7 @@ class JenkinsBuild:
 
     @property
     def status(self):
-        url = self.url + "/lastBuild/api/json?tree=id,building,result,changeSets[items[commitId]],timestamp"
+        url = self.url + "/lastBuild/api/json?tree=id,building,result,changeSets[items[commitId]]{0},timestamp"
         try:
             request = requests.get(url, auth=self.auth)
 
@@ -30,15 +30,17 @@ class JenkinsBuild:
 
                 self.last_result = result
 
-                timestamp = data.get('timestamp', 0)/1000
-                now = time.time()
-                fmtime = time.strftime("%Y/%m/%d %H:%M:%d", time.localtime(timestamp))
-                if now - timestamp > 24 * 60 * 60:
-                    build_id = ".".join(time.strftime("%H%M", time.localtime(timestamp))) + "."
-                else:
-                    build_id = time.strftime("%H.%M", time.localtime(timestamp))
+                try:
+                    build_id = data['changeSets'][0]['items'][0]['commitId']
+                except (KeyError, IndexError) as err:
+                    print("Could not get build id {}".format(err))
+                    build_id = "????"
 
-                return {'building': building, 'result': result, 'buildid': build_id, 'time': fmtime, 'timestamp': timestamp}
+                timestamp = time.localtime(data.get('timestamp', 0) / 1000)
+                fmtime = time.strftime("%Y/%m/%d %H:%m:%d", timestamp)
+
+                return {'building': building, 'result': result, 'buildid': build_id, 'time': fmtime,
+                        'timestamp': timestamp}
             else:
                 print("Status code {} message {}".format(request.status_code, request.text))
         except BaseException as err:

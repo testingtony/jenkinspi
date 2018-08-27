@@ -5,9 +5,13 @@ auth:
   token: user.token
 mq: localhost
 pause: 10 # seconds between polling jenkins
-jobs:
+build:
   - job: path/to/jenkins/job1
-    topic: jenkins/job/topic1
+    topic: jenkins/build/topic1
   - job: path/to/jenkins/job2
-    topic: jenkins/job/topic2
+    topic: jenkins/build/topic2
+deploy:
+  - job: path/to/jenkins/deploy_job1
+    topic: jenkins/deploy/topic1
+  
 ...
