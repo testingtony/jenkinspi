@@ -3,10 +3,10 @@ import ht16k33_seg
 from neopixel import NeoPixel
 from umqtt.simple import MQTTClient
 import ujson
-from pause import Pause
 import ubinascii
 import machine
 import gc
+from pause import pause
 
 CLIENT_ID = ubinascii.hexlify(machine.unique_id())
 
@@ -130,6 +130,8 @@ def apply_config(config):
             mon = Pixel(pixels[output], address)
         elif output.startswith('Alpha'):
             mon = Alpha(i2cs[output], address, texts=config['texts'])
+        else:
+            mon = None
         monitors.append(mon)
         job.append(mon)
         subscriptions.append(topic)
@@ -183,12 +185,12 @@ def main(server="raspberrypi"):
                 pixel.write()
 
             gc.collect()
-            Pause.pause(100)
+            pause(100)
             no_connection_count = 0
 
         except (IndexError, OSError) as e:
             print("exception {!r} {}".format(e, no_connection_count))
-            Pause.pause(1000)
+            pause(1000)
             connected = False
             no_connection_count += 1
             if no_connection_count > 100:
