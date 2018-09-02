@@ -1,6 +1,7 @@
 from machine import I2C
 from machine import Pin
 import ht16k33_seg
+from display import error
 
 
 class AlphaNum:
@@ -28,8 +29,7 @@ class AlphaNumMonitor:
         self._flash = False
         self._address = config['address']
         self._texts = config.get('texts', self._parent.texts)
-
-        self._seg = ht16k33_seg.Seg14x4(parent.i2c, self._address)
+        self._seg = ht16k33_seg.Seg14x4(parent.i2c, address=self._address)
         self._seg.brightness(1)
         self._seg.text('    ')
         self._seg.show()
@@ -39,18 +39,18 @@ class AlphaNumMonitor:
         return self._status
 
     @status.setter
-    def status(self, status):
-        self._status = status
+    def status(self, instruction):
+        self._status = instruction
         try:
-            result = status['result']
+            result = instruction['result']
             if result == 'SUCCESS':
-                result = status['buildid']
+                result = instruction['buildid']
             else:
                 result = self._texts[result]
             self._seg.text(result)
-            self._seg.blink_rate(1 if status['building'] else 0)
+            self._seg.blink_rate(1 if instruction['building'] else 0)
         except KeyError as err:
-            print("Error {}".format(err))
+            error("Key Error in AlphaNum.status", err)
             self._seg.text('????')
             self._seg.blink_rate(0)
         finally:

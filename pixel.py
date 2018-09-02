@@ -51,4 +51,4 @@ class PixelMonitor:
             brightness = 10
 
         colour = [int(component * brightness / 10) for component in self._colour]
-        self._parent.pixel[self._address] = colour[1], colour[0], colour[2]
+        self._parent.pixel[self._address] = [colour[1], colour[0], colour[2]]

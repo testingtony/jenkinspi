@@ -1,149 +1,69 @@
-from machine import Pin, I2C
-import ht16k33_seg
-from neopixel import NeoPixel
 from umqtt.simple import MQTTClient
 import ujson
 import ubinascii
 import machine
+from machine import Pin
 import gc
 from pause import pause
+import traceback
+
 
 CLIENT_ID = ubinascii.hexlify(machine.unique_id())
 
-colours = None
+topic_monitors = dict()
+name_device = dict()
 connection = None
-subscriptions = list()
-
-
-class Pixel:
-    def __init__(self, neopixel, index=0):
-        self._id = index
-        self._neopixel = neopixel
-        self._brightness = 0
-        self.status = {'building': False, 'result': None}
-
-    def tick(self):
-        if self.status.get('building', False):
-            self._brightness = (self._brightness + 1) % 19
-        else:
-            self._brightness = 0
-        brightness = abs(10 - self._brightness)
-
-        try:
-            colour = colours[self.status['result']]
-        except KeyError:
-            colour = (0, 0, 0)
-
-        self._neopixel[self._id] = [int(rgb * brightness / 10) for rgb in (colour[1], colour[0], colour[2])]
-
-    def __str__(self):
-        return "[Pixel neopixel {!s}, id {!s}, status {!r}]".format(self._neopixel, self._id, self.status)
-
-    __repr__ = __str__
-
-
-class Alpha:
-    def __init__(self, i2c, address=0x70, texts=None):
-        self.address = address
-        self._seg = ht16k33_seg.Seg14x4(i2c, address)
-        self._seg.brightness(1)
-        self._seg.text('    ')
-        self._seg.show()
-        if texts:
-            self._texts = texts
-        else:
-            self._texts = dict()
-
-    def tick(self):
-        pass
-
-    @property
-    def status(self):
-        return
-
-    @status.setter
-    def status(self, status):
-        try:
-            result = status['result']
-            if result == 'SUCCESS':
-                result = status['buildid']
-            else:
-                result = self._texts[result]
-            self._seg.text(result)
-            self._seg.blink_rate(1 if status['building'] else 0)
-        except KeyError as err:
-            print("Error {}".format(err))
-            self._seg.text('????')
-            self._seg.blink_rate(0)
-        finally:
-            self._seg.show()
-
-    def __str__(self):
-        return "[Alpha {!s}, id {!s}]".format(self._seg, self.address)
-
-    __repr__ = __str__
-
-
-pixels = dict()
-monitors = list()
-jobs = dict()
 
 
 def message_callback(topic, msg):
-    instruction = ujson.loads(str(msg, 'utf-8'))
-    topic = str(topic, 'utf-8')
-    if topic.startswith('config/reply'):
-        apply_config(instruction)
-        return
+    try:
+        instruction = ujson.loads(str(msg, 'utf-8'))
+        topic = str(topic, 'utf-8')
+        if topic.startswith('config/reply'):
+            apply_config(instruction)
+            return
 
-    for monitor in jobs.get(topic, list()):
-        monitor.status = instruction
+        for monitor in topic_monitors.get(topic, list()):
+            monitor.status = instruction
+    except Exception as e:
+        error("Config failed", e)
 
 
 def apply_config(config):
-    global pixels
-    global monitors
-    global jobs
-    global colours
-    global subscriptions
+    global name_device
+    global topic_monitors
 
-    colours = config['colours']
-    pixels = dict()
-    monitors = list()
-    jobs = dict()
-    i2cs = dict()
-    for (name, setting) in config['devices'].items():
-        if name.startswith("Pixel"):
-            pixels[name] = NeoPixel(Pin(setting['pin']), setting['size'])
-        elif name.startswith("Alpha"):
-            i2cs[name] = I2C(scl=Pin(setting['clock']), sda=Pin(setting['data']))
+    name_device = dict()
+    for name, cfg in config['devices'].items():
+        if name.startswith("Alpha"):
+            from alphanum import AlphaNum
+            name_device[name] = AlphaNum(name, cfg)
+        elif name.startswith("Pixel"):
+            from pixel import Pixel
+            name_device[name] = Pixel(name, cfg)
+        elif name.startswith("OLED"):
+            from oled import OLED
+            name_device[name] = OLED(name, cfg)
         else:
-            print("Unknown configuration Type '{}'".format(name))
-            pass
+            error("I don't know what sort of device a {} is".format(name))
 
-    for monitor in config['monitors']:
-        output = monitor['output']
-        topic = monitor['topic']
-        address = monitor['address']
-        job = jobs.setdefault(topic, list())
-        if output.startswith('Pixel'):
-            mon = Pixel(pixels[output], address)
-        elif output.startswith('Alpha'):
-            mon = Alpha(i2cs[output], address, texts=config['texts'])
-        else:
-            mon = None
-        monitors.append(mon)
-        job.append(mon)
-        subscriptions.append(topic)
-        connection.subscribe(topic)
+    topic_monitors = dict()
+    for monitor_config in config['monitors']:
+        try:
+            device = name_device[monitor_config['output']]
+            monitor = device.monitor(monitor_config)
+            topic_monitors.setdefault(monitor_config['topic'], list()).append(monitor)
+        except KeyError as e:
+            error("Problem with the config {!r}".format(monitor_config), e)
 
+    subscribe()
     gc.collect()
 
 
 def subscribe():
-    global subscriptions
+    global topic_monitors
     global connection
-    for topic in subscriptions:
+    for topic, monitor in topic_monitors.items():
         connection.subscribe(topic)
 
 
@@ -178,11 +98,8 @@ def main(server="raspberrypi"):
 
             connection.check_msg()
 
-            for monitor in monitors:
-                monitor.tick()
-
-            for pixel in pixels.values():
-                pixel.write()
+            for name, device in name_device.items():
+                device.tick()
 
             gc.collect()
             pause(100)
@@ -201,6 +118,25 @@ def main(server="raspberrypi"):
             connection.disconnect()
             connection = None
             break
+
+
+def log(level, message, exception=None):
+    global connection
+    if connection is not None:
+        bmessage = message
+        if exception is not None:
+            bmessage += ' '
+            bmessage += str(exception)
+#        bmessage += traceback.format_exc(limit=4, chain=True)
+        connection.publish(b'status/' + CLIENT_ID + b'/' + bytes(level, 'utf-8'), bytes(bmessage, 'utf-8'))
+
+
+def error(message, exception=None):
+    log("ERROR", message, exception)
+
+
+def warn(message, exception=None):
+    log("WARN", message, exception)
 
 
 if __name__ == '__main__':
