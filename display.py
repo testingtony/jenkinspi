@@ -5,7 +5,6 @@ import machine
 from machine import Pin
 import gc
 from pause import pause
-import traceback
 
 
 CLIENT_ID = ubinascii.hexlify(machine.unique_id())
@@ -44,6 +43,9 @@ def apply_config(config):
         elif name.startswith("OLED"):
             from oled import OLED
             name_device[name] = OLED(name, cfg)
+        elif name.startswith("MUXOLED"):
+            from muxoled import MUX_OLED
+            name_device[name] = MUX_OLED(name, cfg)
         else:
             error("I don't know what sort of device a {} is".format(name))
 

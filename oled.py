@@ -23,7 +23,7 @@ class OLED:
 
 class OLEDMonitor:
     def __init__(self, parent, config):
-        self._parent = parent
+        self.parent = parent
         self._config = config
         self._status = None
         self._flash = False
@@ -37,6 +37,9 @@ class OLEDMonitor:
 
     @status.setter
     def status(self, instruction):
+        self.set_status(instruction)
+
+    def set_status(self, instruction):
         self._status = instruction
         images = ("fail",)
         try:
@@ -50,8 +53,9 @@ class OLEDMonitor:
         finally:
             self.show(images)
 
+
     def show(self, images):
-        display = SSD1306_I2C(self._w, self._h, self._parent.i2c)
+        display = SSD1306_I2C(self._w, self._h, self.parent.i2c)
         display.fill(0)
         x = 0
         for img in images:
