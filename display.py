@@ -41,15 +41,15 @@ def apply_config(config):
             from pixel import Pixel
             name_device[name] = Pixel(name, cfg)
         elif name.startswith("OLED"):
-            print("0.1")
             from oled import OLED
             name_device[name] = OLED(name, cfg)
-            print("0.2")
+        elif name.startswith("Matrix"):
+            from matrix import Matrix
+            name_device[name] = Matrix(name, cfg)
         else:
             error("I don't know what sort of device a {} is".format(name))
 
         if 'mux_address' in cfg:
-            print("wrapping {!r}".format(cfg))
             from mux import MUX
             to_wrap = name_device[name]
             name_device[name] = MUX(name, cfg, to_wrap)
