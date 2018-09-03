@@ -1,3 +1,4 @@
-import display
+#import test
 
-display.main('pib')
+#test.main(0)
+#test.main(1)

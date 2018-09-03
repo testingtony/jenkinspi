@@ -1,5 +1,6 @@
 from neopixel import NeoPixel
 from machine import Pin
+import ujson
 
 
 class Pixel:
@@ -37,7 +38,8 @@ class PixelMonitor:
         return self._status
 
     @status.setter
-    def status(self, status):
+    def status(self, msg):
+        status = ujson.loads(str(msg, 'utf-8'))
         self._status = status
         self._flash = status.get('building', False)
         result = status['result']

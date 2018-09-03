@@ -2,6 +2,7 @@ from machine import I2C, Pin
 from ssd1306 import SSD1306_I2C
 from math import ceil
 from display import error
+import ujson
 
 
 class OLED:
@@ -36,7 +37,8 @@ class OLEDMonitor:
         return self._status
 
     @status.setter
-    def status(self, instruction):
+    def status(self, msg):
+        instruction = ujson.loads(str(msg, 'utf-8'))
         self.set_status(instruction)
 
     def set_status(self, instruction):
@@ -52,7 +54,6 @@ class OLEDMonitor:
             error("Key Error in AlphaNum.status {}".format(err))
         finally:
             self.show(images)
-
 
     def show(self, images):
         display = SSD1306_I2C(self._w, self._h, self.parent.i2c)
@@ -74,7 +75,7 @@ def add_image(display, x, image):
             size = f.readline().strip()
             assert(pbm_format == b'P4')
             w, h = size.split()
-            byte_count = ceil(int(w) / 8.0)
+            byte_count = int(ceil(int(w) / 8.0))
             for line_no in range(int(h)):
                 line = f.read(byte_count)
                 bits = bitz(line)

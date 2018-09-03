@@ -16,14 +16,14 @@ connection = None
 
 def message_callback(topic, msg):
     try:
-        instruction = ujson.loads(str(msg, 'utf-8'))
         topic = str(topic, 'utf-8')
         if topic.startswith('config/reply'):
+            instruction = ujson.loads(str(msg, 'utf-8'))
             apply_config(instruction)
             return
 
         for monitor in topic_monitors.get(topic, list()):
-            monitor.status = instruction
+            monitor.status = msg
     except Exception as e:
         error("Config failed", e)
 
@@ -41,13 +41,18 @@ def apply_config(config):
             from pixel import Pixel
             name_device[name] = Pixel(name, cfg)
         elif name.startswith("OLED"):
+            print("0.1")
             from oled import OLED
             name_device[name] = OLED(name, cfg)
-        elif name.startswith("MUXOLED"):
-            from muxoled import MUX_OLED
-            name_device[name] = MUX_OLED(name, cfg)
+            print("0.2")
         else:
             error("I don't know what sort of device a {} is".format(name))
+
+        if 'mux_address' in cfg:
+            print("wrapping {!r}".format(cfg))
+            from mux import MUX
+            to_wrap = name_device[name]
+            name_device[name] = MUX(name, cfg, to_wrap)
 
     topic_monitors = dict()
     for monitor_config in config['monitors']:

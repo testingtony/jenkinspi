@@ -2,6 +2,7 @@ from machine import I2C
 from machine import Pin
 import ht16k33_seg
 from display import error
+import ujson
 
 
 class AlphaNum:
@@ -39,7 +40,8 @@ class AlphaNumMonitor:
         return self._status
 
     @status.setter
-    def status(self, instruction):
+    def status(self, msg):
+        instruction = ujson.loads(str(msg, 'utf-8'))
         self._status = instruction
         try:
             result = instruction['result']
