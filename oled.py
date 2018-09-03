@@ -51,7 +51,7 @@ class OLEDMonitor:
             else:
                 images = (self._images[result],)
         except KeyError as err:
-            error("Key Error in AlphaNum.status {}".format(err))
+            error("Key Error in OLED.status {}".format(err))
         finally:
             self.show(images)
 
