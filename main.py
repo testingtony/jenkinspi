@@ -1,4 +1,2 @@
-#import test
-
-#test.main(0)
-#test.main(1)
+import display
+display.main('raspberrypi')

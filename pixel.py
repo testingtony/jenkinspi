@@ -29,7 +29,7 @@ class PixelMonitor:
         self._status = None
         self._flash = False
         self._brightness = 0
-        self._address = config['address']
+        self._address = config['id']
         self._colours = config.get('colours', self._parent.colours)
         self._colour = [0, 0, 0]
 

@@ -40,12 +40,12 @@ def apply_config(config):
         elif name.startswith("Pixel"):
             from pixel import Pixel
             name_device[name] = Pixel(name, cfg)
-        elif name.startswith("OLED"):
-            from oled import OLED
-            name_device[name] = OLED(name, cfg)
-        elif name.startswith("Matrix"):
-            from matrix import Matrix
-            name_device[name] = Matrix(name, cfg)
+        elif name.startswith("Text"):
+            from oledtext import OLEDText
+            name_device[name] = OLEDText(name, cfg)
+        elif name.startswith("Bitmap"):
+            from oledbitmap import OLEDBitmap
+            name_device[name] = OLEDBitmap(name, cfg)
         else:
             error("I don't know what sort of device a {} is".format(name))
 
@@ -134,7 +134,6 @@ def log(level, message, exception=None):
         if exception is not None:
             bmessage += ' '
             bmessage += str(exception)
-#        bmessage += traceback.format_exc(limit=4, chain=True)
         connection.publish(b'status/' + CLIENT_ID + b'/' + bytes(level, 'utf-8'), bytes(bmessage, 'utf-8'))
 
 
@@ -147,4 +146,4 @@ def warn(message, exception=None):
 
 
 if __name__ == '__main__':
-    main()
+    main('192.168.0.3')
