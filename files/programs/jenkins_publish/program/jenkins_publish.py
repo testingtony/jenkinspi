@@ -36,6 +36,7 @@ def main(yaml_file="../config/jenkins_publish.yml"):
             for job_config in config['build'] + config['deploy']:
                 status = job_config['jenkins_monitor'].status
                 if status:
+                    data = json.dumps(status)
                     client.publish(job_config['topic'], json.dumps(status), qos=1, retain=True)
 
             time.sleep(config.get('pause', 30))
