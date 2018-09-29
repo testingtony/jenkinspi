@@ -35,7 +35,7 @@ class BuildDeploy:
 
             publish['building'] = build['building'] or deploy['building']
 
-            publish['build_id'] = build['buildid']
+            publish['buildid'] = build['buildid']
             publish['time'] = deploy['time']
             publish['timestamp'] = deploy['timestamp']
 

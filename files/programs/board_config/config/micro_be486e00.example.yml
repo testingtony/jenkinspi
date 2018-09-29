@@ -1,22 +1,27 @@
 ---
-colours: # In Colour LEDs
-  ABORTED: [32, 64, 64]
-  FAILURE: [255, 0, 0]
-  SUCCESS: [0, 255, 0]
-  UNSTABLE: [255, 255, 0]
+config:
+  # result to RGB colours
+  - &normal_colours
+    ABORTED: [32, 64, 64]
+    FAILURE: [255, 0, 0]
+    SUCCESS: [0, 255, 0]
+    UNSTABLE: [255, 255, 0]
 
-texts: # Displayed on segment display
-  ABORTED: Abrt
-  FAILURE: Fail
-  UNSTABLE: Unit
+  # result to 4 chars for alpha display
+  - &four_chars
+    ABORTED: Abrt
+    FAILURE: Fail
+    UNSTABLE: Unst
 
 devices: # the display devices
   Alpha:
     clock: 5
     data: 4
+    texts: *four_chars
   Pixels:
     pin: 15
     size: 2
+    colours: *normal_colours
 
 monitors: # map MQ topic to display
   - topic: jenkins/job/development-build
