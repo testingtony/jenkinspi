@@ -1,0 +1,14 @@
+---
+auth:
+  username: testingtony
+  password: '6[7e$8h7yK5?'
+mq: pib
+pause: 10 # seconds between polling dockerhub
+dockerhub:
+  - repository: testingtony/pm
+    tag: latest
+    topic: dockerhub/job/topic1
+  - repository: 'testingtony/browser-maven'
+    tag: 'chrome'
+    topic: dockerhub/job/topic2
+...

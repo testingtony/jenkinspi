@@ -1,0 +1,4 @@
+PyYaml
+paho-mqtt
+requests
+python-dateutil
