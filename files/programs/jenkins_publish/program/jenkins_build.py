@@ -25,7 +25,7 @@ class JenkinsBuild:
                 self.last_run_id = run_id
 
                 result = data.get('result', 'ABORTED')
-                if not result:
+                if not result or result == 'null':
                     result = self.last_result
 
                 self.last_result = result

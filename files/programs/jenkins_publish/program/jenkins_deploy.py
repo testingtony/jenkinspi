@@ -24,9 +24,8 @@ class JenkinsDeploy:
                 building = (self.last_run_id != '' and run_id != self.last_run_id) or data.get('building', False)
                 self.last_run_id = run_id
 
-                result = data.get('result', 'ABORTED')
-                if not result:
-                    result = self.last_result
+                last = self.last_result or 'ABORTED'
+                result = data.get('result', last)
 
                 self.last_result = result
 
