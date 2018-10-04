@@ -5,6 +5,8 @@ import machine
 from machine import Pin
 import gc
 from pause import pause
+from get_config import get_broadcast_config
+from time import sleep
 
 
 CLIENT_ID = ubinascii.hexlify(machine.unique_id())
@@ -74,24 +76,43 @@ def subscribe():
         connection.subscribe(topic)
 
 
+def await_connection():
+    import network
+    sta_if = network.WLAN(network.STA_IF)
+    for i in range(0, 20):
+        if sta_if.isconnected():
+            print('network config:{!r} clientid:{}'.format(sta_if.ifconfig(), CLIENT_ID))
+            return
+        sleep(1)
+    raise TimeoutError("Not connected to network")
+
+
 def main(server="raspberrypi"):
     global connection
     no_connection_count = 0
-
-    import network
-    sta_if = network.WLAN(network.STA_IF)
-    while not sta_if.isconnected():
-        pass
-    print('network config:{!r} clientid:{}'.format(sta_if.ifconfig(), CLIENT_ID))
+    await_connection()
 
     try:
+        print("Attempting broadcast config")
+        config, addr = get_broadcast_config(CLIENT_ID)
+        if config is not None:
+            print("Config received from {}".format(addr))
+            server = addr
         connection = MQTTClient(CLIENT_ID, server)
         connection.set_callback(message_callback)
         connection.connect()
         connected = True
         print("Connected to MQ")
         connection.subscribe(b"config/reply/" + CLIENT_ID)
-        connection.publish(b'config/request/' + CLIENT_ID, CLIENT_ID)
+        if config is None:
+            print("Attempting to request MQ config from {}".format(server))
+            connection.publish(b'config/request/' + CLIENT_ID, CLIENT_ID)
+        else:
+            try:
+                apply_config(config)
+            except Exception as e:
+                error("Config failed", e)
+
     except OSError:
         pin = Pin(2, Pin.OUT)
         pin.off()
@@ -146,4 +167,4 @@ def warn(message, exception=None):
 
 
 if __name__ == '__main__':
-    main('192.168.0.3')
+    main('192.168.120.160')

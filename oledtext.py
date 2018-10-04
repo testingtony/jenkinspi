@@ -76,8 +76,10 @@ class OLEDTextMonitor:
 
 
 def add_image(display, x, image):
-    if image == ':' or image == '.':
+    if image == ':':
         image = 'colon'
+    elif image == '/':
+        image = 'slash'
     try:
         with open("fonts/{}.pbm".format(image), "rb") as f:
             pbm_format = f.readline().strip()
