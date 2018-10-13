@@ -7,5 +7,5 @@ def pause(time_to_pause=100):
     global now
     import time
     while time.ticks_diff(time.ticks_ms(), now) < time_to_pause:
-        pass
+        time.sleep(0.01)
     now = time.ticks_ms()

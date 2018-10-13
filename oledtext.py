@@ -1,5 +1,4 @@
 from machine import I2C, Pin
-from ssd1306_i2c import Display
 from framebuf import FrameBuffer, MONO_HLSB
 import ujson
 from display import error
@@ -32,8 +31,18 @@ class OLEDTextMonitor:
         self._w = config.get('width', parent.config.get('width', 128))
         self._h = config.get('height', parent.config.get('height', 64))
         self._last = None
-        self._display = Display(parent.i2c, width=self._w, height=self._h)
+        display = config.get('type', parent.config.get('type', 'sh1106'))
+        if display == 'sh1106':
+            import sh1106_i2c
+            self._display = sh1106_i2c.Display(parent.i2c, width=self._w, height=self._h)
+        elif display == 'ssd1306':
+            import ssd1306_i2c
+            self._display = ssd1306_i2c.Display(parent.i2c, width=self._w, height=self._h)
+        else:
+            error("Unknown OLED type")
         self._display.fb.fill(0)
+        self._display.update()
+        self._format = config.get('format', '{buildid}')
 
     @property
     def status(self):
@@ -41,7 +50,8 @@ class OLEDTextMonitor:
 
     @status.setter
     def status(self, msg):
-        instruction = ujson.loads(str(msg, 'utf-8'))
+        s = str(msg, 'utf-8')
+        instruction = ujson.loads(s)
         self._status = instruction
         images = ("failed",)
         try:
@@ -50,7 +60,7 @@ class OLEDTextMonitor:
             if building:
                 images = ('building',)
             elif result == 'SUCCESS':
-                images = instruction['buildid']
+                images = self._format.format(**instruction)
             elif result == 'ABORTED':
                 images = ('aborted',)
             elif result == 'FAILURE':
@@ -94,7 +104,7 @@ def add_image(display, x, image):
             fb = FrameBuffer(bar, w, h, MONO_HLSB)
             display.blit(fb, x, 0)
     except OSError as e:
-        error("Problem loading bitmap", e)
+        error("Problem loading bitmap '{}'".format(image), e)
         w = 0
 
     return w

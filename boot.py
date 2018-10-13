@@ -2,8 +2,12 @@
 import esp
 import gc
 import webrepl
-webrepl.start()
+
+webrepl.stop()
 esp.osdebug(None)
+
+import uos, machine
+uos.dupterm(machine.UART(0, 115200), 1)
 gc.collect()
 
 
@@ -21,11 +25,3 @@ def connect_to_wifi(ssid, password):
             print("remain {0}".format(i))
             i -= 1
     print('network config:', wlan.ifconfig())
-
-
-def rm_rf(dir="fonts"):
-    import os
-    for f in ["fonts/{}".format(f) for f in os.listdir('fonts')]:
-        os.remove(f)
-    os.rmdir('fonts')
-

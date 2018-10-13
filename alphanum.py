@@ -30,6 +30,7 @@ class AlphaNumMonitor:
         self._flash = False
         self._address = config['address']
         self._texts = config.get('texts', self._parent.texts)
+        self._format = config.get('format', '{buildid}')
         self._seg = ht16k33_seg.Seg14x4(parent.i2c, address=self._address)
         self._seg.brightness(1)
         self._seg.text('    ')
@@ -46,7 +47,7 @@ class AlphaNumMonitor:
         try:
             result = instruction['result']
             if result == 'SUCCESS':
-                result = instruction['buildid']
+                result = self._format.format(**instruction)
             else:
                 result = self._texts[result]
             self._seg.text(result)

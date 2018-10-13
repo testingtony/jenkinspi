@@ -5,8 +5,9 @@ import machine
 from machine import Pin
 import gc
 from pause import pause
-from get_config import get_broadcast_config
+from get_mq import get_mq_address
 from time import sleep
+from uerrno import ETIMEDOUT
 
 
 CLIENT_ID = ubinascii.hexlify(machine.unique_id())
@@ -84,47 +85,47 @@ def await_connection():
             print('network config:{!r} clientid:{}'.format(sta_if.ifconfig(), CLIENT_ID))
             return
         sleep(1)
-    raise TimeoutError("Not connected to network")
+    raise ETIMEDOUT("Not connected to network")
 
 
-def main(server="raspberrypi"):
+def main(server=None):
     global connection
+    global name_device
     no_connection_count = 0
     await_connection()
 
     try:
-        print("Attempting broadcast config")
-        config, addr = get_broadcast_config(CLIENT_ID)
-        if config is not None:
-            print("Config received from {}".format(addr))
-            server = addr
+        if server is None:
+            print("Attempting broadcast config")
+            server = get_mq_address(CLIENT_ID)
+
         connection = MQTTClient(CLIENT_ID, server)
         connection.set_callback(message_callback)
         connection.connect()
         connected = True
         print("Connected to MQ")
-        connection.subscribe(b"config/reply/" + CLIENT_ID)
-        if config is None:
-            print("Attempting to request MQ config from {}".format(server))
-            connection.publish(b'config/request/' + CLIENT_ID, CLIENT_ID)
-        else:
-            try:
-                apply_config(config)
-            except Exception as e:
-                error("Config failed", e)
+        connection.subscribe(b'config/reply/' + CLIENT_ID)
+        connection.publish(b'config/request/' + CLIENT_ID, CLIENT_ID)
 
     except OSError:
         pin = Pin(2, Pin.OUT)
         pin.off()
         raise
 
+    ping = 0
     while True:
         try:
             if not connected:
                 connection.connect()
+                connected = True
                 subscribe()
 
             connection.check_msg()
+            if ping == 0:
+                connection.ping()
+                ping = 100
+            else:
+                ping -= 1
 
             for name, device in name_device.items():
                 device.tick()
@@ -141,6 +142,8 @@ def main(server="raspberrypi"):
             if no_connection_count > 100:
                 import machine
                 machine.reset()
+        except KeyboardInterrupt:
+            break
         except BaseException as e:
             print("Other exception {!r}".format(e))
             connection.disconnect()
@@ -167,4 +170,4 @@ def warn(message, exception=None):
 
 
 if __name__ == '__main__':
-    main('192.168.120.160')
+    main()

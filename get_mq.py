@@ -19,7 +19,7 @@ def get_broadcast_address():
         sleep(3)
 
 
-def get_broadcast_config(board_name):
+def get_mq_address(board_name):
     my_addr, broadcast_addr = get_broadcast_address()
     UDP_PORT = 5005
     MESSAGE = bytes(board_name)
@@ -32,15 +32,19 @@ def get_broadcast_config(board_name):
     sock.settimeout(4)
     sock.bind((my_addr, UDP_PORT))
 
-    config = None
     addr = (None,)
     try:
         data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-        config = ujson.loads(str(data, 'utf-8'))
+        if data != b'localhost':
+            addr=(str(data, 'utf-8'),)
     except OSError as e:
         if e.args[0] != ETIMEDOUT:
             raise
     finally:
         sock.close()
 
-    return config, addr[0]
+    return addr[0]
+
+
+if __name__ == '__main__':
+    print("{!s}!".format(get_mq_address(b'121212')))
